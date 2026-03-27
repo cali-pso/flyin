@@ -1,6 +1,6 @@
-def main():
-    print("Hello from flyin!")
-
+from controller import Controller
 
 if __name__ == "__main__":
-    main()
+    controller = Controller()
+
+    controller.run()
