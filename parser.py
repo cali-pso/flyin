@@ -6,7 +6,7 @@ from typing import Any
 import re
 
 
-class Config:
+class Parser:
     def __init__(self):
         pass
 
@@ -95,5 +95,6 @@ class Config:
     def parse_file(self) -> Any:
 
         cleaned = self.get_cleaned_lines("config.txt")
+        self.get_nb_drones(cleaned[0][1])
         for line in cleaned:
             print(line[1])
