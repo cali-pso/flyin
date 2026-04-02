@@ -1,4 +1,4 @@
-from zones import ZoneValidator
+from hub import HubValidator, Hub, StartHub, EndHub
 
 from pydantic import ValidationError
 from typing import Any
@@ -49,7 +49,7 @@ class Parser:
             return nb_drones
 
     @staticmethod
-    def get_zone(line: str, line_nbr: int) -> Any:
+    def parse_zone(line: str, line_nbr: int) -> dict[str, int | str]:
         # Pattern explanation:
         # ^(start_hub|end_hub|hub):    Matches the prefix
         # \s+([^\s\-]+)                Matches the name (no spaces or dashes)
@@ -77,24 +77,44 @@ class Parser:
             for k, v in pairs:
                 metadata[k] = v
         config_dict: dict[Any, Any] = {
-            "hub_type": hub_type,
-            "hub_name": hub_name,
-            "x": x,
-            "y": y,
+            "hub_type": str(hub_type),
+            "name": str(hub_name),
+            "x": int(x),
+            "y": int(y),
             "zone": metadata.get("zone", None),
             "color": metadata.get("color", None),
             "max_drones": metadata.get("max_drones", None),
         }
+        return config_dict
+
+    @staticmethod
+    def get_zone(line: str, line_nbr: int) -> Any:
+        config_dict = Parser.parse_zone(line, line_nbr)
         try:
-            ZoneValidator.model_validate(config_dict)
+            HubValidator.model_validate(config_dict)
         except ValidationError as e:
-            raise ValueError(f"Line {line_nbr + 1}: {e['msg']}")
+            raise ValueError(
+                f"Line {line_nbr + 1}: {[err['msg'] for err in e.errors()]}"
+            )
         except ValueError as e:
             raise ValueError(f"Line {line_nbr + 1}: {e}")
+        else:
+            if config_dict["hub_type"] == "hub":
+                hub = Hub.model_validate(config_dict)
+            elif config_dict["hub_type"].startswith("start"):
+                hub = StartHub.model_validate(config_dict)
+            elif config_dict["hub_type"].startswith("end"):
+                hub = EndHub.model_validate(config_dict)
+            return hub
 
     def parse_file(self) -> Any:
 
         cleaned = self.get_cleaned_lines("config.txt")
-        self.get_nb_drones(cleaned[0][1])
-        for line in cleaned:
-            print(line[1])
+        nb_drones = self.get_nb_drones(cleaned[0][1])
+        hubs: list[Hub] = list()
+        connections: list[Any] = list()
+        for i in range(1, len(cleaned) - 1):
+            if "hub" in cleaned[i][1].split(":")[0]:
+                hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
+        for hub in hubs:
+            print(f"{hub.hub_type:10}{hub.name}")
