@@ -35,3 +35,12 @@ class StartHub(Hub):
 
 class EndHub(Hub):
     pass
+
+
+class Connection(BaseModel):
+    def __init__(
+        self, start_node: Hub, end_node: Hub, max_link_capacity: int = None
+    ):
+        self.start_node = start_node
+        self.end_node = end_node
+        self.max_link_capacity = max_link_capacity

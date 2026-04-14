@@ -112,9 +112,11 @@ class Parser:
         cleaned = self.get_cleaned_lines("config.txt")
         nb_drones = self.get_nb_drones(cleaned[0][1])
         hubs: list[Hub] = list()
-        connections: list[Any] = list()
+        connections: list[Connection] = list()
         for i in range(1, len(cleaned) - 1):
             if "hub" in cleaned[i][1].split(":")[0]:
                 hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
+            elif "connection" in cleand[i][1].split(":")[0]:
+                connections.append(self.get_connection(cleaned[i][1], cleaned[i][0]))
         for hub in hubs:
             print(f"{hub.hub_type:10}{hub.name}")
