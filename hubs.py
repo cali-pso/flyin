@@ -2,7 +2,7 @@ from typing import Any, Annotated
 from pydantic import BaseModel, Field, model_validator
 
 
-class ZoneValidator(BaseModel):
+class HubValidator(BaseModel):
     hub_type: str
     name: str
     x: Annotated[int, Field(ge=0)]

@@ -1,4 +1,5 @@
-from hub import HubValidator, Hub, StartHub, EndHub
+from hubs import HubValidator, Hub, StartHub, EndHub
+from connections import Connection, PatchBayValidator
 
 from pydantic import ValidationError
 from typing import Any
@@ -107,16 +108,61 @@ class Parser:
                 hub = EndHub.model_validate(config_dict)
             return hub
 
+    def get_connection(self, line: str, line_nbr: int) -> Any:
+        config_dict = self.parse_connection(line, line_nbr)
+        start_node, end_node, max_link_capacity = [
+            v for k, v in config_dict.items()
+        ]
+        return Connection(start_node, end_node, max_link_capacity)
+
+    def parse_connection(self, line: str, line_nbr: int) -> Any:
+        pattern = (
+            r"^(connection):"
+            r"\s+([^\s\-]+)"
+            r"-+([^\s\-]+)"
+            r"(?:\s+\[(.*?)\])?$"
+        )
+        match = re.match(pattern, line)
+        if not match:
+            raise ValueError(f"Line {line_nbr + 1}: syntax error")
+
+        _, hub1, hub2, max_link_capacity = match.groups()
+        hubs_names = [hub.name for hub in self.hubs]
+        if not (hub1 in hubs_names and hub2 in hubs_names):
+            raise ValueError(f"Line {line_nbr + 1}: invalid hub name")
+        if max_link_capacity:
+            try:
+                test = int(max_link_capacity.split("=")[0])
+                if test <= 0:
+                    raise ValueError(
+                        "max_link_capacity must be a positive integer"
+                    )
+            except Exception as e:
+                raise ValueError(f"Line {line_nbr + 1}: {e}")
+
+        config_dict = {
+            "hub1": hub1,
+            "hub2": hub2,
+            "max_link_capacity": max_link_capacity,
+        }
+        return config_dict
+
     def parse_file(self) -> Any:
 
         cleaned = self.get_cleaned_lines("config.txt")
         nb_drones = self.get_nb_drones(cleaned[0][1])
-        hubs: list[Hub] = list()
-        connections: list[Connection] = list()
+        self.hubs: list[Hub] = list()
+        self.connections: list[Connection] = list()
         for i in range(1, len(cleaned) - 1):
-            if "hub" in cleaned[i][1].split(":")[0]:
-                hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
-            elif "connection" in cleand[i][1].split(":")[0]:
-                connections.append(self.get_connection(cleaned[i][1], cleaned[i][0]))
-        for hub in hubs:
+            line_type: str = cleaned[i][1].split(":")[0]
+            if "hub" in line_type:
+                self.hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
+            elif "connection" == line_type:
+                self.connections.append(
+                    self.get_connection(cleaned[i][1], cleaned[i][0])
+                )
+        PatchBayValidator(self.connections).check_duplicates()
+        for hub in self.hubs:
             print(f"{hub.hub_type:10}{hub.name}")
+        for connection in self.connections:
+            print(f"{connection.start_node:10} - {connection.end_node}")
