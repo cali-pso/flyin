@@ -3,7 +3,6 @@ from connections import Connection, PatchBayValidator
 
 from pydantic import ValidationError
 from typing import Any
-
 import re
 
 
@@ -147,22 +146,22 @@ class Parser:
         }
         return config_dict
 
-    def parse_file(self) -> Any:
+    def parse_file(self) -> None:
 
         cleaned = self.get_cleaned_lines("config.txt")
-        nb_drones = self.get_nb_drones(cleaned[0][1])
+
+        self.nb_drones = self.get_nb_drones(cleaned[0][1])
         self.hubs: list[Hub] = list()
         self.connections: list[Connection] = list()
+
         for i in range(1, len(cleaned) - 1):
             line_type: str = cleaned[i][1].split(":")[0]
+
             if "hub" in line_type:
                 self.hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
             elif "connection" == line_type:
                 self.connections.append(
                     self.get_connection(cleaned[i][1], cleaned[i][0])
                 )
+
         PatchBayValidator(self.connections).check_duplicates()
-        for hub in self.hubs:
-            print(f"{hub.hub_type:10}{hub.name}")
-        for connection in self.connections:
-            print(f"{connection.start_node:10} - {connection.end_node}")
