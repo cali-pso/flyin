@@ -1,0 +1,16 @@
+Screen {
+	align: center middle;
+	content-align: center middle;
+}
+
+Canvas {
+	width: auto;
+	height: auto;
+}
+
+TMap {
+	width: auto;
+	height: auto;
+	align: center middle;
+	content-align: center middle;
+}

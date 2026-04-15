@@ -129,6 +129,9 @@ class Parser:
         hubs_names = [hub.name for hub in self.hubs]
         if not (hub1 in hubs_names and hub2 in hubs_names):
             raise ValueError(f"Line {line_nbr + 1}: invalid hub name")
+        else:
+            hub1 = [hub for hub in self.hubs if hub.name == hub1][0]
+            hub2 = [hub for hub in self.hubs if hub.name == hub2][0]
         if max_link_capacity:
             try:
                 test = int(max_link_capacity.split("=")[0])
