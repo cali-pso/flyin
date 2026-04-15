@@ -20,7 +20,6 @@ class HubValidator(BaseModel):
 
 
 class Hub(BaseModel):
-
     hub_type: str
     name: str
     x: Annotated[int, Field(ge=0)]
@@ -29,8 +28,10 @@ class Hub(BaseModel):
     color: str | None = None
     max_drones: Annotated[int | None, Field(ge=0, le=100)] = 1
 
+
 class StartHub(Hub):
     pass
+
 
 class EndHub(Hub):
     pass
