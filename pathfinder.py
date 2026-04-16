@@ -1,0 +1,157 @@
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+import heapq
+from parser import Parser
+from hubs import Hub
+from reservation import ReservationTable
+
+
+@dataclass(order=True)
+class SearchState:
+    """
+    Represents a specific state in the A* search tree.
+    Ordered by the estimated total cost (f_score).
+    """
+
+    f_score: int  # f(n) = g(n) + h(n). Used for priority queue sorting.
+    turn: int = field(compare=False)  # g(n) = actual turns taken so far.
+    current_hub_name: str = field(compare=False)
+    path_history: List[str] = field(compare=False)
+
+
+class Pathfinder:
+    def __init__(self, parser: Parser):
+        self.parser = parser
+        self.hubs_dict = {hub.name: hub for hub in parser.hubs}
+
+        # Build an adjacency list for quick neighbor lookups
+        self.graph: dict[str, list[Hub]] = {
+            hub.name: [] for hub in parser.hubs
+        }
+        for conn in parser.connections:
+            self.graph[conn.start_node.name].append(conn.end_node)
+            self.graph[conn.end_node.name].append(conn.start_node)
+
+    def heuristic(self, current_hub: Hub, goal_hub: Hub) -> int:
+        """
+        Calculates the Manhattan distance between two hubs.
+        Acts as h(n) for the A* algorithm.
+        """
+        return abs(current_hub.x - goal_hub.x) + abs(
+            current_hub.y - goal_hub.y
+        )
+
+    def find_path(
+        self,
+        start_name: str,
+        goal_name: str,
+        start_turn: int,
+        reservation_table: ReservationTable,
+    ) -> Optional[List[str]]:
+
+        start_hub = self.hubs_dict[start_name]
+        goal_hub = self.hubs_dict[goal_name]
+
+        # Initialize Priority Queue
+        open_set: list[SearchState] = []
+        initial_h = self.heuristic(start_hub, goal_hub)
+        heapq.heappush(
+            open_set,
+            SearchState(initial_h, start_turn, start_name, [start_name]),
+        )
+
+        visited = set()
+
+        while open_set:
+            current_state = heapq.heappop(open_set)
+
+            # Goal Check
+            if current_state.current_hub_name == goal_name:
+                return current_state.path_history
+
+            # Mark as visited for this specific point in time
+            state_key = (current_state.current_hub_name, current_state.turn)
+            if state_key in visited:
+                continue
+            visited.add(state_key)
+
+            # Option 1: WAIT action. Stay at the current hub for 1 turn.
+            next_turn = current_state.turn + 1
+            if reservation_table.is_available(
+                next_turn, current_state.current_hub_name
+            ):
+                wait_h = self.heuristic(
+                    self.hubs_dict[current_state.current_hub_name], goal_hub
+                )
+                wait_f = next_turn + wait_h
+                heapq.heappush(
+                    open_set,
+                    SearchState(
+                        wait_f,
+                        next_turn,
+                        current_state.current_hub_name,
+                        current_state.path_history
+                        + [current_state.current_hub_name],
+                    ),
+                )
+
+            # Option 2: MOVE actions. Check all connected neighbors.
+            for neighbor in self.graph[current_state.current_hub_name]:
+                if neighbor.zone == "blocked":
+                    continue  # Ignore blocked zones entirely
+
+                conn_name = ReservationTable.get_connection_name(
+                    current_state.current_hub_name, neighbor.name
+                )
+
+                # Handle standard vs. restricted zones
+                if neighbor.zone == "restricted":
+                    arrival_turn = current_state.turn + 2
+
+                    # 2. Destination must have capacity at arrival (turn + 2)
+                    if reservation_table.is_available(
+                        current_state.turn + 1, conn_name
+                    ) and reservation_table.is_available(
+                        arrival_turn, neighbor.name
+                    ):
+                        move_h = self.heuristic(neighbor, goal_hub)
+                        new_path = current_state.path_history + [
+                            conn_name,
+                            neighbor.name,
+                        ]
+                        heapq.heappush(
+                            open_set,
+                            SearchState(
+                                arrival_turn + move_h,
+                                arrival_turn,
+                                neighbor.name,
+                                new_path,
+                            ),
+                        )
+
+                else:
+                    # Normal or Priority zones (cost = 1)
+                    arrival_turn = current_state.turn + 1
+
+                    if reservation_table.is_available(
+                        arrival_turn, conn_name
+                    ) and reservation_table.is_available(
+                        arrival_turn, neighbor.name
+                    ):
+                        # to make the algorithm prefer them.
+                        move_h = self.heuristic(neighbor, goal_hub)
+                        priority_discount = (
+                            -1 if neighbor.zone == "priority" else 0
+                        )
+                        f_score = arrival_turn + move_h + priority_discount
+
+                        new_path = current_state.path_history + [neighbor.name]
+                        heapq.heappush(
+                            open_set,
+                            SearchState(
+                                f_score, arrival_turn, neighbor.name, new_path
+                            ),
+                        )
+
+        return None  # No path found (Deadlock)
