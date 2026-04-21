@@ -1,71 +1,29 @@
 from parser import Parser
 from map import Map
-from tmap import TMap
 from pathfinder import PathFinder
 from reservation_table import ReservationTable
 from hubs import Hub
-
-from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header
-from textual.color import Color
-
-from textual_canvas import Canvas
-from time import sleep
+from visualiser import Visualiser
 
 
-class Controller(App):
-    CSS_PATH = ["visualiser.tcss"]
-    BINDINGS = [
-        ("d", "toggle_light", "Toggle light mode"),
-        ("s", "start_simulation", "Start simulation"),
-    ]
-    SIZE = 20
+class Controller:
 
-    def compose(self) -> ComposeResult:
-        yield Header()
-        yield TMap(self.init_parser(), self.SIZE)
-        yield Footer()
+    def __init__(self) -> None:
+        pass
 
-    def action_toggle_light(self) -> None:
-        """An action to toggle light mode."""
+    def run_parser(self) -> None:
+        parser = Parser()
+        parser.parse_file()
+        self.map = Map(parser)
 
-        self.theme = (
-            "textual-dark"
-            if self.theme == "textual-light"
-            else "textual-light"
-        )
-
-    def action_start_simulation(self) -> None:
-        path_finder = PathFinder(self.map)
-        self.paths: list[list[Hub]] = list()
+    def run_simulation(self) -> None:
+        pathfinder = PathFinder(self.map)
         table = ReservationTable(self.map)
+        self.paths: list[list[Hub]] = list()
         for i in range(0, self.map.nb_drones):
-            self.paths.append(path_finder.find_path("start", "goal", 0, table))
-        for path in self.paths:
-            for hub in path:
-                self.query_one(Canvas).set_pixel(
-                    hub.x * self.SIZE, hub.y * self.SIZE, Color.parse("blue")
-                )
-        self.turns = max([len(path) for path in self.paths])
+            self.paths.append(pathfinder.find_path(self.map.start_hub.name, self.map.end_hub.name, 0, table))
+        self.turns = max([len(i) for i in self.paths])
 
-    def on_mount(self) -> None:
-        for connection in self.map.connections:
-            start_x, start_y = (
-                connection.start_node.x * self.SIZE,
-                connection.start_node.y * self.SIZE,
-            )
-            end_x, end_y = (
-                connection.end_node.x * self.SIZE,
-                connection.end_node.y * self.SIZE,
-            )
-            self.query_one(Canvas).draw_line(start_x, start_y, end_x, end_y)
-        for hub in self.map.hubs:
-            self.query_one(Canvas).set_pixel(
-                hub.x * self.SIZE, hub.y * self.SIZE, Color.parse("red")
-            )
-
-    def init_parser(self) -> Parser:
-        self.parser = Parser()
-        self.parser.parse_file()
-        self.map = Map(self.parser)
-        return self.map
+    def run_visualiser(self) -> None:
+        visualiser = Visualiser(self.map, self.paths)
+        visualiser.run()

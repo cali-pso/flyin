@@ -1,12 +1,13 @@
-from typing import Any, Annotated
-from pydantic import BaseModel, Field, model_validator
+from typing import Any
+from dataclasses import dataclass
+from pydantic import BaseModel, model_validator
 
 
 class HubValidator(BaseModel):
     hub_type: str
     name: str
-    x: Annotated[int, Field(ge=0)]
-    y: Annotated[int, Field(ge=0)]
+    x: int
+    y: int
     zone: str | None = "normal"
     color: str | None = None
     max_drones: int | None = 1
@@ -19,19 +20,22 @@ class HubValidator(BaseModel):
         return self
 
 
-class Hub(BaseModel):
+@dataclass
+class Hub:
     hub_type: str
     name: str
-    x: Annotated[int, Field(ge=0)]
-    y: Annotated[int, Field(ge=0)]
-    zone: str | None = "normal"
-    color: str | None = None
-    max_drones: Annotated[int | None, Field(ge=0, le=100)] = 1
+    x: int
+    y: int
+    zone: str = "normal"
+    color: str = "purple"
+    max_drones: int = 1
 
 
+@dataclass
 class StartHub(Hub):
-    pass
+    color: str = "blue"
 
 
+@dataclass
 class EndHub(Hub):
-    pass
+    color: str = "red"

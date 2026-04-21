@@ -58,7 +58,7 @@ class Parser:
         pattern = (
             r"^(start_hub|end_hub|hub):"
             r"\s+([^\s\-]+)"
-            r"\s+(\d+)\s+(\d+)"
+            r"\s+(-?\d+)\s+(-?\d+)"
             r"(?:\s+\[(.*?)\])?$"
         )
         match = re.match(pattern, line)
@@ -76,6 +76,7 @@ class Parser:
             pairs = re.findall(r"([a-zA-Z_]+)=([a-zA-Z0-9_]+)", metadata_str)
             for k, v in pairs:
                 metadata[k] = v
+        max_drones = metadata.get("max_drones", None)
         config_dict: dict[Any, Any] = {
             "hub_type": str(hub_type),
             "name": str(hub_name),
@@ -83,7 +84,7 @@ class Parser:
             "y": int(y),
             "zone": metadata.get("zone", None),
             "color": metadata.get("color", None),
-            "max_drones": metadata.get("max_drones", None),
+            "max_drones": max_drones if max_drones else 1,
         }
         return config_dict
 
@@ -100,11 +101,11 @@ class Parser:
             raise ValueError(f"Line {line_nbr + 1}: {e}")
         else:
             if config_dict["hub_type"] == "hub":
-                hub = Hub.model_validate(config_dict)
+                hub = Hub(**config_dict)
             elif config_dict["hub_type"].startswith("start"):
-                hub = StartHub.model_validate(config_dict)
+                hub = StartHub(**config_dict)
             elif config_dict["hub_type"].startswith("end"):
-                hub = EndHub.model_validate(config_dict)
+                hub = EndHub(**config_dict)
             return hub
 
     def parse_connection(self, line: str, line_nbr: int) -> Any:
@@ -127,8 +128,8 @@ class Parser:
             hub2 = [hub for hub in self.hubs if hub.name == hub2][0]
         if max_link_capacity:
             try:
-                test = int(max_link_capacity.split("=")[0])
-                if test <= 0:
+                max_link_capacity = int(max_link_capacity.split("=")[1])
+                if max_link_capacity <= 0:
                     raise ValueError(
                         "max_link_capacity must be a positive integer"
                     )

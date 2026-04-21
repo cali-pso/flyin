@@ -1,4 +1,4 @@
-from hubs import Hub
+from hubs import Hub, StartHub, EndHub
 from connections import Connection
 from parser import Parser
 
@@ -9,6 +9,8 @@ class Map:
     def __init__(self, parser: Parser) -> None:
         self.nb_drones = parser.nb_drones
         self.hubs: list[Hub] = parser.hubs
+        self.start_hub = [i for i in self.hubs if isinstance(i, StartHub)][0]
+        self.end_hub = [i for i in self.hubs if isinstance(i, EndHub)][0]
         self.connections: list[Connection] = parser.connections
 
     @staticmethod

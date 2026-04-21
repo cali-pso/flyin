@@ -53,6 +53,8 @@ class ReservationTable:
 
         if not capacity:
             return True
+        if isinstance(capacity, str):
+            capacity = int(capacity)
 
         return occupancy < capacity
 
@@ -65,7 +67,7 @@ class ReservationTable:
 
         if not self.table.get(turn):
             self.table[turn] = dict()
-        elif not self.table[turn].get(location):
+        if not self.table[turn].get(location):
             self.table[turn][location] = 0
 
         self.table[turn][location] += 1

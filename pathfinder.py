@@ -25,12 +25,16 @@ class SearchState:
 class PathFinder:
     def __init__(self, map: Map):
         self.map = map
-        self.hubs_dict = {hub.name: hub for hub in map.hubs}
+        self.locations_dict = {hub.name: hub for hub in map.hubs}
+        self.locations_dict.update(
+            {
+                map.get_connection_from_obj(conn): conn
+                for conn in map.connections
+            }
+        )
 
         # Build an adjacency list for quick neighbor lookups
-        self.graph: dict[str, list[Hub]] = {
-            hub.name: [] for hub in map.hubs
-        }
+        self.graph: dict[str, list[Hub]] = {hub.name: [] for hub in map.hubs}
         for conn in map.connections:
             self.graph[conn.start_node.name].append(conn.end_node)
             self.graph[conn.end_node.name].append(conn.start_node)
@@ -52,8 +56,9 @@ class PathFinder:
         reservation_table: ReservationTable,
     ) -> Optional[List[str]]:
 
-        start_hub = self.hubs_dict[start_name]
-        goal_hub = self.hubs_dict[goal_name]
+        # breakpoint()
+        start_hub = self.locations_dict[start_name]
+        goal_hub = self.locations_dict[goal_name]
 
         # Initialize Priority Queue
         open_set: list[SearchState] = []
@@ -70,7 +75,11 @@ class PathFinder:
 
             # Goal Check
             if current_state.current_hub_name == goal_name:
-                return [self.hubs_dict[i] for i in current_state.path_history]
+                for i, loc in enumerate(current_state.path_history):
+                    reservation_table.reserve(i, loc)
+                return [
+                    self.locations_dict[i] for i in current_state.path_history
+                ]
 
             # Mark as visited for this specific point in time
             state_key = (current_state.current_hub_name, current_state.turn)
@@ -84,7 +93,8 @@ class PathFinder:
                 next_turn, current_state.current_hub_name
             ):
                 wait_h = self.heuristic(
-                    self.hubs_dict[current_state.current_hub_name], goal_hub
+                    self.locations_dict[current_state.current_hub_name],
+                    goal_hub,
                 )
                 wait_f = next_turn + wait_h
                 heapq.heappush(
@@ -117,6 +127,10 @@ class PathFinder:
                     ) and reservation_table.is_available(
                         arrival_turn, neighbor.name
                     ):
+                    #    reservation_table.reserve(
+                    #        current_state.turn + 1, conn_name
+                    #    )
+                    #    reservation_table.reserve(arrival_turn, neighbor.name)
                         move_h = self.heuristic(neighbor, goal_hub)
                         new_path = current_state.path_history + [
                             conn_name,
@@ -141,6 +155,8 @@ class PathFinder:
                     ) and reservation_table.is_available(
                         arrival_turn, neighbor.name
                     ):
+                    #    reservation_table.reserve(arrival_turn, conn_name)
+                    #    reservation_table.reserve(arrival_turn, neighbor.name)
                         # to make the algorithm prefer them.
                         move_h = self.heuristic(neighbor, goal_hub)
                         priority_discount = (
