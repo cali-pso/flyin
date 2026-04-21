@@ -1,5 +1,4 @@
-from parser import Parser
-from connections import Connection
+from map import Map
 from hubs import StartHub, EndHub
 
 from typing import Dict
@@ -10,29 +9,32 @@ class ReservationTable:
     Tracks space-time reservations to prevent drone collisions.
     """
 
-    def __init__(self, parser: Parser) -> None:
+    def __init__(self, map: Map) -> None:
+        self.map: Map = map
         self.table: Dict[int, Dict[str, int]] = dict()
         self.capacities: Dict[str, float | int] = dict()
 
-        self._init_capacities(parser)
+        self._init_capacities()
 
-    def _init_capacities(self, parser: Parser) -> None:
+    def _init_capacities(self) -> None:
         """Create table of maximum capacities for hubs and connections"""
 
-        for hub in parser.hubs:
-            if isinstance(hub, StartHub) or isinstance(hub, EndHub):
+        for hub in self.map.hubs:
+            if (
+                isinstance(hub, StartHub)
+                or isinstance(hub, EndHub)
+                or not hub.max_drones
+            ):
                 self.capacities[hub.name] = float("inf")
             else:
                 self.capacities[hub.name] = getattr(hub, "max_drones", 1)
 
-        for connec in parser.connections:
-            connec_name = self.get_connection_name(connec)
+        for connec in self.map.connections:
+            connec_name = self.map.get_connection_from_obj(connec)
             capacity = getattr(connec, "max_link_capacity", 1)
+            if not capacity:
+                capacity = float('inf')
             self.capacities[connec_name] = capacity
-
-    @staticmethod
-    def get_connection_name(connec: Connection) -> str:
-        return f"{connec.start_node.name}-{connec.end_node.name}"
 
     def get_occupancy(self, turn: int, location: str) -> int:
         if turn not in self.table:
@@ -43,11 +45,14 @@ class ReservationTable:
 
         if location not in self.capacities:
             raise ValueError(
-                f"Location {location} does not exist in the network."
+                f"Location {location} does not exist in the network.\n\n{self.capacities}"
             )
 
         occupancy = self.get_occupancy(turn, location)
         capacity = self.capacities[location]
+
+        if not capacity:
+            return True
 
         return occupancy < capacity
 

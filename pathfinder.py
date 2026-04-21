@@ -1,10 +1,12 @@
+from map import Map
+from hubs import Hub
+from reservation_table import ReservationTable
+from map import Map
+
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 import heapq
-from parser import Parser
-from hubs import Hub
-from reservation import ReservationTable
 
 
 @dataclass(order=True)
@@ -20,16 +22,16 @@ class SearchState:
     path_history: List[str] = field(compare=False)
 
 
-class Pathfinder:
-    def __init__(self, parser: Parser):
-        self.parser = parser
-        self.hubs_dict = {hub.name: hub for hub in parser.hubs}
+class PathFinder:
+    def __init__(self, map: Map):
+        self.map = map
+        self.hubs_dict = {hub.name: hub for hub in map.hubs}
 
         # Build an adjacency list for quick neighbor lookups
         self.graph: dict[str, list[Hub]] = {
-            hub.name: [] for hub in parser.hubs
+            hub.name: [] for hub in map.hubs
         }
-        for conn in parser.connections:
+        for conn in map.connections:
             self.graph[conn.start_node.name].append(conn.end_node)
             self.graph[conn.end_node.name].append(conn.start_node)
 
@@ -68,7 +70,7 @@ class Pathfinder:
 
             # Goal Check
             if current_state.current_hub_name == goal_name:
-                return current_state.path_history
+                return [self.hubs_dict[i] for i in current_state.path_history]
 
             # Mark as visited for this specific point in time
             state_key = (current_state.current_hub_name, current_state.turn)
@@ -101,7 +103,7 @@ class Pathfinder:
                 if neighbor.zone == "blocked":
                     continue  # Ignore blocked zones entirely
 
-                conn_name = ReservationTable.get_connection_name(
+                conn_name = self.map.get_connection_from_str(
                     current_state.current_hub_name, neighbor.name
                 )
 

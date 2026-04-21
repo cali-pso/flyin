@@ -9,7 +9,7 @@ class HubValidator(BaseModel):
     y: Annotated[int, Field(ge=0)]
     zone: str | None = "normal"
     color: str | None = None
-    max_drones: Annotated[int | None, Field(ge=0, le=100)] = 1
+    max_drones: int | None = 1
 
     @model_validator(mode="after")
     def check_zone(self) -> Any:

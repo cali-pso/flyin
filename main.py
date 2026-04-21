@@ -1,11 +1,13 @@
 from controller import Controller
 from parser import Parser
+from map import Map
 
 if __name__ == "__main__":
     controller = Controller()
 
     controller.run()
-    parser = Parser()
-    parser.parse_file()
-    for hub in parser.hubs:
-        print(hub.x, hub.y)
+    print(controller.turns)
+    for path in controller.paths:
+        for hub in path:
+            print(hub)
+        print()

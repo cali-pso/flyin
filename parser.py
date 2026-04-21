@@ -107,13 +107,6 @@ class Parser:
                 hub = EndHub.model_validate(config_dict)
             return hub
 
-    def get_connection(self, line: str, line_nbr: int) -> Any:
-        config_dict = self.parse_connection(line, line_nbr)
-        start_node, end_node, max_link_capacity = [
-            v for k, v in config_dict.items()
-        ]
-        return Connection(start_node, end_node, max_link_capacity)
-
     def parse_connection(self, line: str, line_nbr: int) -> Any:
         pattern = (
             r"^(connection):"
@@ -149,6 +142,13 @@ class Parser:
         }
         return config_dict
 
+    def get_connection(self, line: str, line_nbr: int) -> Any:
+        config_dict = self.parse_connection(line, line_nbr)
+        start_node, end_node, max_link_capacity = [
+            v for k, v in config_dict.items()
+        ]
+        return Connection(start_node, end_node, max_link_capacity)
+
     def parse_file(self) -> None:
 
         cleaned = self.get_cleaned_lines("config.txt")
@@ -157,7 +157,7 @@ class Parser:
         self.hubs: list[Hub] = list()
         self.connections: list[Connection] = list()
 
-        for i in range(1, len(cleaned) - 1):
+        for i in range(1, len(cleaned)):
             line_type: str = cleaned[i][1].split(":")[0]
 
             if "hub" in line_type:
