@@ -2,16 +2,19 @@ from hubs import Hub
 from connections import Connection
 
 from termcolor import cprint
+from typing import Optional
 
 
 class Printer:
     def __init__(
-        self, paths: list[list[Hub]], connections_dict: dict[str, Connection]
+        self,
+        paths: list[list[Hub | Connection]],
+        connections_dict: dict[Connection, str],
     ) -> None:
         self.paths = paths
         self.connections_dict = connections_dict
         self.turns = max([len(i) for i in self.paths])
-        self.paths_by_turn: dict[int, list[Hub]] = {
+        self.paths_by_turn: dict[int, list[Optional[Hub | Connection]]] = {
             i: [(h[i] if len(h) > i else None) for h in self.paths]
             for i in range(self.turns)
             if i > 0

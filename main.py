@@ -1,10 +1,8 @@
-import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
 from controller import Controller
-from connections import Connection
-from parser import Parser
-from map import Map
+
+import os
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 if __name__ == "__main__":
     controller = Controller()

@@ -1,11 +1,14 @@
 from hubs import Hub
 
-from typing import Any
+from typing import Any, Optional
 
 
 class Connection:
     def __init__(
-        self, start_node: Hub, end_node: Hub, max_link_capacity: int = None
+        self,
+        start_node: Hub,
+        end_node: Hub,
+        max_link_capacity: Optional[int] = None,
     ):
         self.start_node = start_node
         self.end_node = end_node
@@ -13,7 +16,7 @@ class Connection:
 
 
 class PatchBayValidator:
-    def __init__(self, connections: list[Connection]) -> Any:
+    def __init__(self, connections: list[Connection]) -> None:
         self.connections = connections
 
     def check_duplicates(self) -> Any:

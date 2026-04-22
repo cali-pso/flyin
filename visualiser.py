@@ -2,15 +2,15 @@ from hubs import Hub
 from connections import Connection
 from map import Map
 
-from time import sleep
 import pygame
+from typing import Optional
 
 
 class Visualiser:
     SPACE = 200
     OFFSET = 400
 
-    def __init__(self, map: Map, paths: list[list[Hub]]) -> None:
+    def __init__(self, map: Map, paths: list[list[Hub | Connection]]) -> None:
         pygame.init()
         self.screen = pygame.display.set_mode((1920, 1080))
         self.clock = pygame.time.Clock()
@@ -21,7 +21,7 @@ class Visualiser:
         self.get_centered_map()
         self.rainbow = pygame.image.load("rainbow.png").convert_alpha()
         self.turns = max([len(h) for h in self.paths])
-        self.paths_by_turn: dict[int, list[Hub]] = {
+        self.paths_by_turn: dict[int, list[Optional[Hub | Connection]]] = {
             i: [(h[i] if len(h) > i else None) for h in self.paths]
             for i in range(self.turns)
         }
@@ -36,10 +36,9 @@ class Visualiser:
 
         last_update = 0
         anim_time = 1250
-        turn_time = 500 
+        turn_time = 500
 
         while self.running and self.current_turn < self.turns:
-
             # 1. Calculate time logic
             current_time = pygame.time.get_ticks()
             time_elapsed = current_time - last_update
@@ -152,23 +151,28 @@ class Visualiser:
             start_loc = path[start_index]
             end_loc = path[next_index]
 
-            start_pos = self.get_drone_px(start_loc)
-            end_pos = self.get_drone_px(end_loc)
+            # Ensuring we don't try to get positions of None
+            if start_loc and end_loc:
+                start_pos = self.get_drone_px(start_loc)
+                end_pos = self.get_drone_px(end_loc)
 
-            # Applying the Linear Interpolation formula
-            current_x = start_pos[0] + (end_pos[0] - start_pos[0]) * progress
-            current_y = start_pos[1] + (end_pos[1] - start_pos[1]) * progress
-            current_pos = (current_x, current_y)
+                # Applying the Linear Interpolation formula
+                current_x = (
+                    start_pos[0] + (end_pos[0] - start_pos[0]) * progress
+                )
+                current_y = (
+                    start_pos[1] + (end_pos[1] - start_pos[1]) * progress
+                )
+                current_pos = (current_x, current_y)
 
-            pygame.draw.circle(
-                self.screen, "white", current_pos, int(self.space / 7)
-            )
-            pygame.draw.circle(
-                self.screen, "black", current_pos, int(self.space / 9)
-            )
+                pygame.draw.circle(
+                    self.screen, "white", current_pos, int(self.space / 7)
+                )
+                pygame.draw.circle(
+                    self.screen, "black", current_pos, int(self.space / 9)
+                )
 
     def print_drones(self) -> None:
-        drones = [i for i in self.paths_by_turn]
         for drone in self.paths_by_turn[self.current_turn]:
             if drone:
                 pygame.draw.circle(
@@ -184,7 +188,7 @@ class Visualiser:
                     int(self.space / 9),
                 )
 
-    def get_drone_px(self, loc: Hub | Connection) -> int:
+    def get_drone_px(self, loc: Hub | Connection) -> tuple[float, float]:
 
         if isinstance(loc, Hub):
             pos = (

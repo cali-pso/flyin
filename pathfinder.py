@@ -1,10 +1,10 @@
 from map import Map
 from hubs import Hub
+from connections import Connection
 from reservation_table import ReservationTable
-from map import Map
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Dict
 
 import heapq
 
@@ -25,7 +25,9 @@ class SearchState:
 class PathFinder:
     def __init__(self, map: Map):
         self.map = map
-        self.locations_dict = {hub.name: hub for hub in map.hubs}
+        self.locations_dict: Dict[str, Hub | Connection] = {
+            hub.name: hub for hub in map.hubs
+        }
         self.locations_dict.update(
             {
                 map.get_connection_from_obj(conn): conn
@@ -54,11 +56,15 @@ class PathFinder:
         goal_name: str,
         start_turn: int,
         reservation_table: ReservationTable,
-    ) -> Optional[List[str]]:
+    ) -> List[Hub | Connection]:
 
         # breakpoint()
         start_hub = self.locations_dict[start_name]
         goal_hub = self.locations_dict[goal_name]
+
+        # In this implementation context we know they are hubs.
+        assert isinstance(start_hub, Hub)
+        assert isinstance(goal_hub, Hub)
 
         # Initialize Priority Queue
         open_set: list[SearchState] = []
@@ -92,8 +98,12 @@ class PathFinder:
             if reservation_table.is_available(
                 next_turn, current_state.current_hub_name
             ):
+                current_hub_obj = self.locations_dict[
+                    current_state.current_hub_name
+                ]
+                assert isinstance(current_hub_obj, Hub)
                 wait_h = self.heuristic(
-                    self.locations_dict[current_state.current_hub_name],
+                    current_hub_obj,
                     goal_hub,
                 )
                 wait_f = next_turn + wait_h
@@ -108,29 +118,24 @@ class PathFinder:
                     ),
                 )
 
-            # Option 2: MOVE actions. Check all connected neighbors.
             for neighbor in self.graph[current_state.current_hub_name]:
                 if neighbor.zone == "blocked":
-                    continue  # Ignore blocked zones entirely
+                    continue
 
                 conn_name = self.map.get_connection_from_str(
                     current_state.current_hub_name, neighbor.name
                 )
 
-                # Handle standard vs. restricted zones
+                assert conn_name is not None
+
                 if neighbor.zone == "restricted":
                     arrival_turn = current_state.turn + 2
 
-                    # 2. Destination must have capacity at arrival (turn + 2)
                     if reservation_table.is_available(
                         current_state.turn + 1, conn_name
                     ) and reservation_table.is_available(
                         arrival_turn, neighbor.name
                     ):
-                    #    reservation_table.reserve(
-                    #        current_state.turn + 1, conn_name
-                    #    )
-                    #    reservation_table.reserve(arrival_turn, neighbor.name)
                         move_h = self.heuristic(neighbor, goal_hub)
                         new_path = current_state.path_history + [
                             conn_name,
@@ -147,7 +152,6 @@ class PathFinder:
                         )
 
                 else:
-                    # Normal or Priority zones (cost = 1)
                     arrival_turn = current_state.turn + 1
 
                     if reservation_table.is_available(
@@ -155,9 +159,6 @@ class PathFinder:
                     ) and reservation_table.is_available(
                         arrival_turn, neighbor.name
                     ):
-                    #    reservation_table.reserve(arrival_turn, conn_name)
-                    #    reservation_table.reserve(arrival_turn, neighbor.name)
-                        # to make the algorithm prefer them.
                         move_h = self.heuristic(neighbor, goal_hub)
                         priority_discount = (
                             -1 if neighbor.zone == "priority" else 0
@@ -172,4 +173,8 @@ class PathFinder:
                             ),
                         )
 
-        return None  # No path found (Deadlock)
+        raise PathNotFoundError()
+
+
+class PathNotFoundError(Exception):
+    pass

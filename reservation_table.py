@@ -33,7 +33,7 @@ class ReservationTable:
             connec_name = self.map.get_connection_from_obj(connec)
             capacity = getattr(connec, "max_link_capacity", 1)
             if not capacity:
-                capacity = float('inf')
+                capacity = float("inf")
             self.capacities[connec_name] = capacity
 
     def get_occupancy(self, turn: int, location: str) -> int:
@@ -45,7 +45,7 @@ class ReservationTable:
 
         if location not in self.capacities:
             raise ValueError(
-                f"Location {location} does not exist in the network.\n\n{self.capacities}"
+                f"Location {location} does not exist in the network."
             )
 
         occupancy = self.get_occupancy(turn, location)

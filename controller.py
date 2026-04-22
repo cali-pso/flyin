@@ -3,6 +3,7 @@ from map import Map
 from pathfinder import PathFinder
 from reservation_table import ReservationTable
 from hubs import Hub
+from connections import Connection
 from visualiser import Visualiser
 from printer import Printer
 
@@ -19,7 +20,7 @@ class Controller:
     def run_simulation(self) -> None:
         pathfinder = PathFinder(self.map)
         table = ReservationTable(self.map)
-        self.paths: list[list[Hub]] = list()
+        self.paths: list[list[Hub | Connection]] = list()
         for i in range(0, self.map.nb_drones):
             self.paths.append(
                 pathfinder.find_path(
@@ -36,7 +37,8 @@ class Controller:
         connections_dict = {
             connec: name
             for name in [
-                self.map.get_connection_from_obj(n) for n in self.map.connections
+                self.map.get_connection_from_obj(n)
+                for n in self.map.connections
             ]
             for connec in self.map.connections
         }

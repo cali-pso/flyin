@@ -2,8 +2,6 @@ from hubs import Hub, StartHub, EndHub
 from connections import Connection
 from parser import Parser
 
-from typing import Optional
-
 
 class Map:
     def __init__(self, parser: Parser) -> None:
@@ -19,7 +17,7 @@ class Map:
 
     def get_connection_from_str(
         self, start_node_name: str, end_node_name: str
-    ) -> Optional[str]:
+    ) -> str:
         node_names = sorted([start_node_name, end_node_name])
         for connec in self.connections:
             connec_node_names = sorted(

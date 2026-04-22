@@ -7,11 +7,11 @@ import re
 
 
 class Parser:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
-    def get_cleaned_lines(config_path: str) -> dict[int, str]:
+    def get_cleaned_lines(config_path: str) -> list[tuple[int, str]]:
         """Open given file and remove comments/trailing whitespaces"""
 
         cleaned: list[tuple[int, str]] = list()
@@ -49,7 +49,7 @@ class Parser:
             return nb_drones
 
     @staticmethod
-    def parse_zone(line: str, line_nbr: int) -> dict[str, int | str]:
+    def parse_zone(line: str, line_nbr: int) -> dict[str, Any]:
         # Pattern explanation:
         # ^(start_hub|end_hub|hub):    Matches the prefix
         # \s+([^\s\-]+)                Matches the name (no spaces or dashes)
@@ -77,7 +77,7 @@ class Parser:
             for k, v in pairs:
                 metadata[k] = v
         max_drones = metadata.get("max_drones", None)
-        config_dict: dict[Any, Any] = {
+        config_dict: dict[str, Any] = {
             "hub_type": str(hub_type),
             "name": str(hub_name),
             "x": int(x),
@@ -89,7 +89,7 @@ class Parser:
         return config_dict
 
     @staticmethod
-    def get_zone(line: str, line_nbr: int) -> Any:
+    def get_zone(line: str, line_nbr: int) -> Hub:
         config_dict = Parser.parse_zone(line, line_nbr)
         try:
             HubValidator.model_validate(config_dict)
@@ -108,7 +108,7 @@ class Parser:
                 hub = EndHub(**config_dict)
             return hub
 
-    def parse_connection(self, line: str, line_nbr: int) -> Any:
+    def parse_connection(self, line: str, line_nbr: int) -> dict[str, Any]:
         pattern = (
             r"^(connection):"
             r"\s+([^\s\-]+)"
@@ -119,16 +119,18 @@ class Parser:
         if not match:
             raise ValueError(f"Line {line_nbr + 1}: syntax error")
 
-        _, hub1, hub2, max_link_capacity = match.groups()
+        _, hub1_name, hub2_name, max_link_capacity_str = match.groups()
         hubs_names = [hub.name for hub in self.hubs]
-        if not (hub1 in hubs_names and hub2 in hubs_names):
+        if not (hub1_name in hubs_names and hub2_name in hubs_names):
             raise ValueError(f"Line {line_nbr + 1}: invalid hub name")
         else:
-            hub1 = [hub for hub in self.hubs if hub.name == hub1][0]
-            hub2 = [hub for hub in self.hubs if hub.name == hub2][0]
-        if max_link_capacity:
+            hub1 = [hub for hub in self.hubs if hub.name == hub1_name][0]
+            hub2 = [hub for hub in self.hubs if hub.name == hub2_name][0]
+
+        max_link_capacity = 1
+        if max_link_capacity_str:
             try:
-                max_link_capacity = int(max_link_capacity.split("=")[1])
+                max_link_capacity = int(max_link_capacity_str.split("=")[1])
                 if max_link_capacity <= 0:
                     raise ValueError(
                         "max_link_capacity must be a positive integer"
@@ -136,16 +138,14 @@ class Parser:
             except Exception as e:
                 raise ValueError(f"Line {line_nbr + 1}: {e}")
 
-        if not max_link_capacity:
-            max_link_capacity = 1
-        config_dict = {
+        config_dict: dict[str, Any] = {
             "hub1": hub1,
             "hub2": hub2,
             "max_link_capacity": max_link_capacity,
         }
         return config_dict
 
-    def get_connection(self, line: str, line_nbr: int) -> Any:
+    def get_connection(self, line: str, line_nbr: int) -> Connection:
         config_dict = self.parse_connection(line, line_nbr)
         start_node, end_node, max_link_capacity = [
             v for k, v in config_dict.items()

@@ -9,5 +9,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pygame>=2.6.1",
     "termcolor>=3.3.0",
-    "textual-canvas>=1.1.0",
 ]
+
+[tool.mypy]
+explicit_package_bases = true
