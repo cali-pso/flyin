@@ -4,7 +4,7 @@ install:
 	uv sync
 
 run:
-	uv run $(NAME)
+	@ uv run $(NAME)
 
 clean:
 	uv cache clean

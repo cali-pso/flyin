@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "cprint>=1.2.2",
     "pydantic>=2.12.5",
     "pygame>=2.6.1",
+    "termcolor>=3.3.0",
     "textual-canvas>=1.1.0",
 ]

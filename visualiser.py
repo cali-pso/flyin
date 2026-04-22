@@ -77,7 +77,7 @@ class Visualiser:
 
     def print_turn(self) -> None:
         text = self.big_font.render(
-            f"{self.current_turn + 1}/{self.turns}", True, "white"
+            f"{self.current_turn}/{self.turns - 1}", True, "white"
         )
         text_pos = 60, 40
         self.screen.blit(text, text_pos)

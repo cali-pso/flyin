@@ -1,3 +1,6 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 from controller import Controller
 from connections import Connection
 from parser import Parser
@@ -8,11 +11,5 @@ if __name__ == "__main__":
 
     controller.run_parser()
     controller.run_simulation()
+    controller.run_printer()
     controller.run_visualiser()
-    for path in controller.paths:
-        for i, hub in enumerate(path):
-            print(i, hub)
-            if isinstance(hub, Connection):
-                print(getattr(hub, "max_link_capacity", None))
-        print()
-    print(controller.turns)
