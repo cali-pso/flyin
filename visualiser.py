@@ -2,6 +2,7 @@ from hubs import Hub
 from connections import Connection
 from map import Map
 
+from time import sleep
 import pygame
 
 
@@ -18,55 +19,169 @@ class Visualiser:
         self.map = map
         self.paths = paths
         self.get_centered_map()
+        self.rainbow = pygame.image.load("rainbow.png").convert_alpha()
+        self.turns = max([len(h) for h in self.paths])
+        self.paths_by_turn: dict[int, list[Hub]] = {
+            i: [(h[i] if len(h) > i else None) for h in self.paths]
+            for i in range(self.turns)
+        }
+        self.arrived = 0
+        self.current_turn = 0
+
+        self.small_font = pygame.font.SysFont("Arial", 12, bold=True)
+        self.big_font = pygame.font.SysFont("Arial", 24, bold=True)
+        self.paused = False
 
     def run(self) -> None:
 
-        while self.running:
+        last_update = 0
+        anim_time = 1250
+        turn_time = 500 
+
+        while self.running and self.current_turn < self.turns:
+
+            # 1. Calculate time logic
+            current_time = pygame.time.get_ticks()
+            time_elapsed = current_time - last_update
+
+            # Clamp progress to a maximum of 1.0 (100%)
+            if time_elapsed >= turn_time:
+                progress = min(1.0, (time_elapsed - turn_time) / anim_time)
+            else:
+                progress = 0
+
+            # 2. Event Handling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
 
-            self.screen.fill("black")
+            # 3. Turn Progression Logic
+            if progress >= 1.0:
+                if time_elapsed >= anim_time:
+                    self.current_turn += 1
+                    if self.current_turn >= self.turns:
+                        break
+                    last_update = current_time
+                    progress = 0
 
-            for connec in self.map.connections:
-                start_pos = (
-                    connec.start_node.x * self.space + self.offset_x,
-                    connec.start_node.y * self.space + self.offset_y,
-                )
-                end_pos = (
-                    connec.end_node.x * self.space + self.offset_x,
-                    connec.end_node.y * self.space + self.offset_y,
-                )
-                pygame.draw.line(
-                    self.screen,
-                    "white",
-                    start_pos,
-                    end_pos,
-                    int(self.space / 10),
-                )
+            self.screen.fill((15, 15, 15))
 
-            for hub in self.map.hubs:
-                pos = (
-                    hub.x * self.space + self.offset_x,
-                    hub.y * self.space + self.offset_y,
+            self.print_turn()
+            self.print_connections()
+            self.print_hubs()
+            self.per_frame_animation(progress)
+
+            pygame.display.flip()
+
+            self.clock.tick(30)
+
+    def print_turn(self) -> None:
+        text = self.big_font.render(
+            f"{self.current_turn + 1}/{self.turns}", True, "white"
+        )
+        text_pos = 60, 40
+        self.screen.blit(text, text_pos)
+
+    def print_connections(self) -> None:
+        for connec in self.map.connections:
+            start_pos = self.get_drone_px(connec.start_node)
+            end_pos = self.get_drone_px(connec.end_node)
+            pygame.draw.line(
+                self.screen,
+                (150, 150, 150),
+                start_pos,
+                end_pos,
+                int(self.space / 10),
+            )
+
+    def print_hubs(self) -> None:
+        for hub in self.map.hubs:
+            pos = self.get_drone_px(hub)
+            if hub.color == "rainbow":
+                self.rainbow = pygame.transform.scale(
+                    self.rainbow, (self.space * 0.45, self.space * 0.45)
                 )
+                image_rect = self.rainbow.get_rect(center=pos)
+                self.screen.blit(self.rainbow, image_rect)
+            else:
                 pygame.draw.circle(
                     self.screen, hub.color, pos, int(self.space / 4)
                 )
+            if hub.zone or hub.hub_type in ["start_hub", "end_hub"]:
+                info = hub.zone if hub.zone else hub.hub_type
+                text = self.small_font.render(f"{info}", True, "white")
+                text_pos = (
+                    pos[0] + int(self.space / 4),
+                    pos[1] - int(self.space / 4),
+                )
+                self.screen.blit(text, text_pos)
 
-            self.per_frame_animation()
+            if hub.hub_type != "end_hub":
+                current_usage = len(
+                    [
+                        h
+                        for h in self.paths_by_turn[self.current_turn]
+                        if h == hub
+                    ]
+                )
+            else:
+                current_usage = len(
+                    [
+                        h
+                        for h in self.paths_by_turn[self.current_turn]
+                        if not h or h == hub
+                    ]
+                )
+            if current_usage > 0:
+                text = self.small_font.render(
+                    f"{current_usage}/{hub.max_drones}", True, "white"
+                )
+                text_pos = (
+                    pos[0] - int(self.space / 4),
+                    pos[1] - int(self.space / 4),
+                )
+                self.screen.blit(text, text_pos)
 
-            pygame.display.flip()
-            self.clock.tick(10)
-
-    def per_frame_animation(self) -> None:
+    def per_frame_animation(self, progress: float) -> None:
+        """Calculates LERP for every drone and draws them."""
         for path in self.paths:
-            for hub in path:
+            # Prevent IndexError by capping the indices
+            start_index = min(self.current_turn, len(path) - 1)
+            next_index = min(self.current_turn + 1, len(path) - 1)
+
+            start_loc = path[start_index]
+            end_loc = path[next_index]
+
+            start_pos = self.get_drone_px(start_loc)
+            end_pos = self.get_drone_px(end_loc)
+
+            # Applying the Linear Interpolation formula
+            current_x = start_pos[0] + (end_pos[0] - start_pos[0]) * progress
+            current_y = start_pos[1] + (end_pos[1] - start_pos[1]) * progress
+            current_pos = (current_x, current_y)
+
+            pygame.draw.circle(
+                self.screen, "white", current_pos, int(self.space / 7)
+            )
+            pygame.draw.circle(
+                self.screen, "black", current_pos, int(self.space / 9)
+            )
+
+    def print_drones(self) -> None:
+        drones = [i for i in self.paths_by_turn]
+        for drone in self.paths_by_turn[self.current_turn]:
+            if drone:
                 pygame.draw.circle(
                     self.screen,
-                    "purple",
-                    self.get_drone_px(hub),
-                    int(self.space / 8),
+                    "white",
+                    self.get_drone_px(drone),
+                    int(self.space / 7),
+                )
+                pygame.draw.circle(
+                    self.screen,
+                    "black",
+                    self.get_drone_px(drone),
+                    int(self.space / 9),
                 )
 
     def get_drone_px(self, loc: Hub | Connection) -> int:
@@ -76,7 +191,7 @@ class Visualiser:
                 loc.x * self.space + self.offset_x,
                 loc.y * self.space + self.offset_y,
             )
-        else:
+        elif isinstance(loc, Connection):
             start_x, start_y = self.get_drone_px(loc.start_node)
             end_x, end_y = self.get_drone_px(loc.end_node)
             pos = ((start_x + end_x) / 2, (start_y + end_y) / 2)

@@ -136,6 +136,8 @@ class Parser:
             except Exception as e:
                 raise ValueError(f"Line {line_nbr + 1}: {e}")
 
+        if not max_link_capacity:
+            max_link_capacity = 1
         config_dict = {
             "hub1": hub1,
             "hub2": hub2,
