@@ -23,6 +23,7 @@ class Printer:
             (lambda text: cprint(f"{text}", (103, 32, 173), end=" ")),
             (lambda text: cprint(f"{text}", (102, 0, 0), end=" ")),
             (lambda text: cprint(f"{text}", (169, 0, 204), end=" ")),
+            (lambda text: cprint(f"{text}", (0, 255, 68), end=" ")),
             (lambda text: self.print_rainbow(text)),
         ]
 
@@ -33,7 +34,8 @@ class Printer:
             "purple": color_prints_list[3],
             "darkred": color_prints_list[4],
             "violet": color_prints_list[5],
-            "rainbow": color_prints_list[6],
+            "lime": color_prints_list[6],
+            "rainbow": color_prints_list[7],
         }
 
     def print(self) -> None:
