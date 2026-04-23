@@ -1,13 +1,17 @@
 from controller import Controller
 
-import os
+from termcolor import cprint
+import sys
 
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 if __name__ == "__main__":
-    controller = Controller()
+    try:
+        controller = Controller()
 
-    controller.run_parser()
-    controller.run_simulation()
-    controller.run_printer()
-    controller.run_visualiser()
+        controller.run_parser()
+        controller.run_simulation()
+        controller.run_printer()
+        controller.run_visualiser()
+    except Exception as e:
+        cprint(f"Error: {e}", "red", file=sys.stderr)
+        sys.exit()

@@ -2,24 +2,27 @@ from hubs import Hub
 from connections import Connection
 from map import Map
 
-import pygame
+import os
 from typing import Optional
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 
 class Visualiser:
     SPACE = 200
     OFFSET = 400
+    import pygame
 
     def __init__(self, map: Map, paths: list[list[Hub | Connection]]) -> None:
-        pygame.init()
-        self.screen = pygame.display.set_mode((1920, 1080))
-        self.clock = pygame.time.Clock()
+        self.pygame.init()
+        self.screen = self.pygame.display.set_mode((1920, 1080))
+        self.clock = self.pygame.time.Clock()
         self.running = True
 
         self.map = map
         self.paths = paths
         self.get_centered_map()
-        self.rainbow = pygame.image.load("rainbow.png").convert_alpha()
+        self.rainbow = self.pygame.image.load("rainbow.png").convert_alpha()
         self.turns = max([len(h) for h in self.paths])
         self.paths_by_turn: dict[int, list[Optional[Hub | Connection]]] = {
             i: [(h[i] if len(h) > i else None) for h in self.paths]
@@ -28,8 +31,8 @@ class Visualiser:
         self.arrived = 0
         self.current_turn = 0
 
-        self.small_font = pygame.font.SysFont("Arial", 12, bold=True)
-        self.big_font = pygame.font.SysFont("Arial", 24, bold=True)
+        self.small_font = self.pygame.font.SysFont("Arial", 12, bold=True)
+        self.big_font = self.pygame.font.SysFont("Arial", 24, bold=True)
         self.paused = False
 
     def run(self) -> None:
@@ -40,7 +43,7 @@ class Visualiser:
 
         while self.running and self.current_turn < self.turns:
             # 1. Calculate time logic
-            current_time = pygame.time.get_ticks()
+            current_time = self.pygame.time.get_ticks()
             time_elapsed = current_time - last_update
 
             # Clamp progress to a maximum of 1.0 (100%)
@@ -50,8 +53,8 @@ class Visualiser:
                 progress = 0
 
             # 2. Event Handling
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            for event in self.pygame.event.get():
+                if event.type == self.pygame.QUIT:
                     self.running = False
 
             # 3. Turn Progression Logic
@@ -70,7 +73,7 @@ class Visualiser:
             self.print_hubs()
             self.per_frame_animation(progress)
 
-            pygame.display.flip()
+            self.pygame.display.flip()
 
             self.clock.tick(30)
 
@@ -85,7 +88,7 @@ class Visualiser:
         for connec in self.map.connections:
             start_pos = self.get_drone_px(connec.start_node)
             end_pos = self.get_drone_px(connec.end_node)
-            pygame.draw.line(
+            self.pygame.draw.line(
                 self.screen,
                 (150, 150, 150),
                 start_pos,
@@ -97,13 +100,13 @@ class Visualiser:
         for hub in self.map.hubs:
             pos = self.get_drone_px(hub)
             if hub.color == "rainbow":
-                self.rainbow = pygame.transform.scale(
+                self.rainbow = self.pygame.transform.scale(
                     self.rainbow, (self.space * 0.45, self.space * 0.45)
                 )
                 image_rect = self.rainbow.get_rect(center=pos)
                 self.screen.blit(self.rainbow, image_rect)
             else:
-                pygame.draw.circle(
+                self.pygame.draw.circle(
                     self.screen, hub.color, pos, int(self.space / 4)
                 )
             if hub.zone or hub.hub_type in ["start_hub", "end_hub"]:
@@ -165,23 +168,23 @@ class Visualiser:
                 )
                 current_pos = (current_x, current_y)
 
-                pygame.draw.circle(
+                self.pygame.draw.circle(
                     self.screen, "white", current_pos, int(self.space / 7)
                 )
-                pygame.draw.circle(
+                self.pygame.draw.circle(
                     self.screen, "black", current_pos, int(self.space / 9)
                 )
 
     def print_drones(self) -> None:
         for drone in self.paths_by_turn[self.current_turn]:
             if drone:
-                pygame.draw.circle(
+                self.pygame.draw.circle(
                     self.screen,
                     "white",
                     self.get_drone_px(drone),
                     int(self.space / 7),
                 )
-                pygame.draw.circle(
+                self.pygame.draw.circle(
                     self.screen,
                     "black",
                     self.get_drone_px(drone),

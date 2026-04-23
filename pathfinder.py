@@ -79,6 +79,8 @@ class PathFinder:
         while open_set:
             current_state = heapq.heappop(open_set)
 
+            if current_state.turn > 1000:
+                continue
             # Goal Check
             if current_state.current_hub_name == goal_name:
                 for i, loc in enumerate(current_state.path_history):
@@ -94,6 +96,7 @@ class PathFinder:
             visited.add(state_key)
 
             # Option 1: WAIT action. Stay at the current hub for 1 turn.
+
             next_turn = current_state.turn + 1
             if reservation_table.is_available(
                 next_turn, current_state.current_hub_name

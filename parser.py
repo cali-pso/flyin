@@ -77,6 +77,10 @@ class Parser:
             for k, v in pairs:
                 metadata[k] = v
         max_drones = metadata.get("max_drones", None)
+        if max_drones and int(max_drones) < 0:
+            raise ValueError(
+                f"Line {line_nbr + 1}: max_drones must be a positive integer"
+            )
         config_dict: dict[str, Any] = {
             "hub_type": str(hub_type),
             "name": str(hub_name),
@@ -159,15 +163,24 @@ class Parser:
         self.nb_drones = self.get_nb_drones(cleaned[0][1])
         self.hubs: list[Hub] = list()
         self.connections: list[Connection] = list()
+        start_check, end_check = False, False
 
         for i in range(1, len(cleaned)):
             line_type: str = cleaned[i][1].split(":")[0]
 
             if "hub" in line_type:
+                if line_type == "start_hub":
+                    start_check = True
+                elif line_type == "end_hub":
+                    end_check = True
                 self.hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
             elif "connection" == line_type:
                 self.connections.append(
                     self.get_connection(cleaned[i][1], cleaned[i][0])
                 )
+            elif not line_type.startswith("#"):
+                raise ValueError(f"Line {i + 1}: Syntax error")
+        if not start_check or not end_check:
+            raise ValueError("Needs both start_hub and end_hub")
 
         PatchBayValidator(self.connections).check_duplicates()
