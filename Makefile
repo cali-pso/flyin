@@ -6,6 +6,9 @@ install:
 run:
 	@ uv run $(NAME)
 
+debug:
+	@ uv run python -m pdb $(NAME)
+
 clean:
 	uv cache clean
 	rm -rf __pycache__ .mypy_cache .venv uv.lock

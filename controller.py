@@ -34,7 +34,10 @@ class Controller:
             for i in range(0, self.map.nb_drones):
                 self.paths.append(
                     pathfinder.find_path(
-                        self.map.start_hub.name, self.map.end_hub.name, 0, table
+                        self.map.start_hub.name,
+                        self.map.end_hub.name,
+                        0,
+                        table,
                     )
                 )
             self.turns = max([len(i) for i in self.paths]) - 1
