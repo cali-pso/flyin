@@ -45,6 +45,4 @@ connection: maze_c1-maze_c2
 connection: bottleneck-final_stretch1
 connection: bottleneck-final_stretch2
 connection: bottleneck-final_stretch3
-connection: final_stretch1-goal
-connection: final_stretch2-goal
 connection: final_stretch3-goal

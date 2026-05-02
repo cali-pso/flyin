@@ -4,6 +4,7 @@ from connections import Connection
 from reservation_table import ReservationTable
 
 from dataclasses import dataclass, field
+from collections import deque
 from typing import List, Dict
 
 import heapq
@@ -35,11 +36,7 @@ class PathFinder:
             }
         )
 
-        # Build an adjacency list for quick neighbor lookups
-        self.graph: dict[str, list[Hub]] = {hub.name: [] for hub in map.hubs}
-        for conn in map.connections:
-            self.graph[conn.start_node.name].append(conn.end_node)
-            self.graph[conn.end_node.name].append(conn.start_node)
+        self.graph = map.graph
 
     def heuristic(self, current_hub: Hub, goal_hub: Hub) -> int:
         """
@@ -58,15 +55,9 @@ class PathFinder:
         reservation_table: ReservationTable,
     ) -> List[Hub | Connection]:
 
-        # breakpoint()
         start_hub = self.locations_dict[start_name]
         goal_hub = self.locations_dict[goal_name]
 
-        # In this implementation context we know they are hubs.
-        assert isinstance(start_hub, Hub)
-        assert isinstance(goal_hub, Hub)
-
-        # Initialize Priority Queue
         open_set: list[SearchState] = []
         initial_h = self.heuristic(start_hub, goal_hub)
         heapq.heappush(
@@ -79,8 +70,6 @@ class PathFinder:
         while open_set:
             current_state = heapq.heappop(open_set)
 
-            if current_state.turn > 1000:
-                continue
             # Goal Check
             if current_state.current_hub_name == goal_name:
                 for i, loc in enumerate(current_state.path_history):
@@ -96,7 +85,6 @@ class PathFinder:
             visited.add(state_key)
 
             # Option 1: WAIT action. Stay at the current hub for 1 turn.
-
             next_turn = current_state.turn + 1
             if reservation_table.is_available(
                 next_turn, current_state.current_hub_name
@@ -104,7 +92,6 @@ class PathFinder:
                 current_hub_obj = self.locations_dict[
                     current_state.current_hub_name
                 ]
-                assert isinstance(current_hub_obj, Hub)
                 wait_h = self.heuristic(
                     current_hub_obj,
                     goal_hub,
@@ -121,6 +108,7 @@ class PathFinder:
                     ),
                 )
 
+            # Explore moving options (wether neighbour is restricted or not)
             for neighbor in self.graph[current_state.current_hub_name]:
                 if neighbor.zone == "blocked":
                     continue
@@ -128,8 +116,6 @@ class PathFinder:
                 conn_name = self.map.get_connection_from_str(
                     current_state.current_hub_name, neighbor.name
                 )
-
-                assert conn_name is not None
 
                 if neighbor.zone == "restricted":
                     arrival_turn = current_state.turn + 2
@@ -177,6 +163,38 @@ class PathFinder:
                         )
 
         raise PathNotFoundError()
+
+
+class Scout:
+    def __init__(self, map: Map) -> None:
+        self.graph = map.graph
+        self.start_name = map.start_hub.name
+        self.end_name = map.end_hub.name
+
+    def is_solvable(self) -> None:
+        """
+        Uses BFS to verify if a physical path exists between start and goal,
+        ignoring all temporal constraints and reservations.
+        """
+        visited = set([self.start_name])
+        queue = deque([self.start_name])
+
+        while queue:
+            current_name = queue.popleft()
+
+            if current_name == self.end_name:
+                print("what")
+                return
+
+            for neighbor in self.graph[current_name]:
+                if neighbor.zone == "blocked":
+                    continue
+
+                if neighbor.name not in visited:
+                    visited.add(neighbor.name)
+                    queue.append(neighbor.name)
+
+        raise PathNotFoundError("map is not solvable")
 
 
 class PathNotFoundError(Exception):

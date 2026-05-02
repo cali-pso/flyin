@@ -1,6 +1,6 @@
 from parser import Parser
 from map import Map
-from pathfinder import PathFinder
+from pathfinder import PathFinder, Scout
 from reservation_table import ReservationTable
 from hubs import Hub
 from connections import Connection
@@ -28,6 +28,8 @@ class Controller:
 
     def run_simulation(self) -> None:
         try:
+            scout = Scout(self.map)
+            scout.is_solvable()
             pathfinder = PathFinder(self.map)
             table = ReservationTable(self.map)
             self.paths: list[list[Hub | Connection]] = list()

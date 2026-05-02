@@ -10,6 +10,11 @@ class Map:
         self.start_hub = [i for i in self.hubs if isinstance(i, StartHub)][0]
         self.end_hub = [i for i in self.hubs if isinstance(i, EndHub)][0]
         self.connections: list[Connection] = parser.connections
+        
+        self.graph: dict[str, list[Hub]] = {hub.name: [] for hub in self.hubs}
+        for conn in self.connections:
+            self.graph[conn.start_node.name].append(conn.end_node)
+            self.graph[conn.end_node.name].append(conn.start_node)
 
     @staticmethod
     def get_connection_from_obj(connec: Connection) -> str:
