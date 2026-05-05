@@ -1,7 +1,7 @@
 [project]
 name = "flyin"
 version = "0.1.0"
-description = "Add your description here"
+description = "A 42 cursus project about directing a fleet of drones"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
