@@ -91,7 +91,7 @@ class Parser:
             "x": int(x),
             "y": int(y),
             "zone": metadata.get("zone", None),
-            "color": metadata.get("color", None),
+            "color": metadata.get("color", "white"),
             "max_drones": max_drones if max_drones else 1,
         }
         return config_dict
@@ -186,4 +186,5 @@ class Parser:
         if not start_check or not end_check:
             raise ValueError("Needs both start_hub and end_hub")
 
-        PatchBayValidator(self.connections).check_duplicates()
+
+        PatchBayValidator(self.connections, self.hubs).check_duplicates()
