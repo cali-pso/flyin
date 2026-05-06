@@ -25,17 +25,23 @@ To execute run:
 ```Bash
     make run
 ```
-> this will fetch the config.txt file in the repository and use it as map  
+> this will pass the config.txt file in the repository as a map to the program 
    
+To use a custom map, either change the config.txt file or run:
+```Bash
+    uv run python3 main.py [CUSTOM_MAP] --visual
+```
+
+
+To remove cached folders and files, as well as venv and info created by uv:  
 ```Bash
     make clean
 ```
-> removes cached folders and files, as well as venv and info created by uv  
  
+To run flake8 and mypy on current directory:  
 ```Bash
     make lint
 ```
-> runs flake8 and mypy on current directory  
 
 ## Resources
 
@@ -48,44 +54,76 @@ For a better understanding of the concepts that support my algorithm, and of
 graph theory overall.
 
 AI was used as a way to discover the different algorithms I could implement, 
-as well as an help understanding complex heuristics-related concepts, 
-rewording some of the Wikipedia articles.
+and ways I could optimize the one I've chosen. 
+As well as a help understanding complex heuristics-related concepts, rewording 
+some of the Wikipedia articles.
 
-## About the algorithm
+## Algorithm explanation
 
-I chose to implement the A* pathfinding algorithm paired with a 'reservation 
-table' system. The A* takes care of the space dimension, while the table handles 
-time. 
-The reservation table is a nested dictionnary : one entry for each turn, 
-and at each entry a dictionnary that holds one drone's position per entry.
- 
-At the very beginning, a quick BFS is ran to ensure start_hub and end_hub are 
-linked by connections and the map can be resolved.
+I chose to implement a space-time variant of the A* pathfinding algorithm.
+This implied the use of a 'reservation table' to keep track of the drones 
+movements through time, while the A* figured out the movement themselves.
+Before making a move, the algorithm asks the table wether it's target hub 
+at it's target turn is available. The table checks the hub's current and 
+maximum capacity, and answers accordingly, allowing the algorithm to make 
+it's choice. 
 
-Starting from a random first drone : 
- 
-The A* algorithm works in such a way that each of the steps taken is a choice made 
-from mainly two numbers: first, the number of steps it took us to get here. 
-Then, the estimated cost to get to the end, obtained by a consistent, admissible 
-heuristic function. This means that the cost will never be over-estimated - nor 
-running the function in an identical situation will result in a different 
-estimation. 
-It also ensures the move is possible within the rules specific to our context : 
-The hub is not an obstacle, and it is not overcrowded at the current turn.
-In case of a restricted hub, or an overcrowded hub, waiting is an option.
-If neighbour is a priority hub, it will without fault be prioritized.
- 
-Once the drone has reached it's goal, it's path is reserved within the table:
-Hubs' loads at each turn are updated. This allows for the remaining drones to 
-avoid overcrowding said hubs.
+The A* algorithm works by comparing every possible move by their 'f_score'.
+This f score is the addition of the steps taken to move to the point we 
+are currently at, and the estimated amount of steps needed to get to our goal. 
+The estimation is done by a simple, admissible and consistent heuristic function. 
+I have chosen to use the Manhattan Distance function as my heuristic. Although 
+meant for grid based problems, it works satisfyingly well in our graph case.
+It simply returns this:
+```Python
+abs(current_hub.x - goal_hub.x) + abs(current_hub.y - goal_hub.y)
+```
 
-This resolves in a very cost efficient planned route: the infamous challenger map 
-is solved in exactly 45 turns.
+So we have a ReservationTable class, a PathFinder class (applies A*), a Scout 
+class (checks for map being solvable with BFS before moving onto complex A*) and 
+a SearchState class. The search state is a specific point in our A* search tree. 
+It holds a point in space (hub), a point in time (turn), a history of hubs 
+traversed to get here, and the f_score obtained from our heuristic function.
+
+Here is a pseudocode breakdown of the PathFinder's A*:
+
+```Pseudo
+- Initialize a priority queue with a first search state made from start_node
+        (This queue will hold search states ordered by their f_score)
+
+
+- While the queue is not empty:
+
+    - Pop first node from queue (lowest f_score) and make it current state
+
+    - If current state's hub is goal_hub, return current state's history
+
+    - Ask table for current state's hub availability at next turn.
+        - If possible, push a new search state into the queue:
+            current state's hub, next turn, appropriate history and f_score
+            (this is our waiting option - crucial for availability management)
+
+    - For each of the current state's hub neighbours:
+        - Establish target turn : next if normal/priority, next + 1 if restricted
+        - Ask table if neighbour is available at target turn
+            - If available, push a new search state into the queue:
+            neighbour, target turn, appropriate history and f_score
+            (f_score is artificially lowered for priority hubs - this makes them 
+             automatically prefered when popping from queue at loop start)
+
+
+- Once the goal has been reached and the history (path) returned, reserve each 
+   of it's hubs at each turn in the table, prevents collisions from future drones.
+```
+
+The search states are automatically ordered within the queue thanks to dataclasses
+and heapq. Heapq automatically sorts pushed elements, and dataclasses allows for 
+the sorting key to be a SearchState's f_score.
 
 ## About the visualiser
 
 Built with pygame, it is meant to be minimalist while providing all the useful 
-information and provide a useful render of the simulation. In the top-left corner 
+information and a useful animation of the simulation. In the top-left corner 
 is displayed turns information as
 ``` Python
 f"{current_turn}"/f"{total_turns}"
