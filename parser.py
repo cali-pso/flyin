@@ -1,7 +1,7 @@
 from hubs import HubValidator, Hub, StartHub, EndHub
 from connections import Connection, PatchBayValidator
 
-from pydantic import ValidationError
+from pydantic import ValidationError  # type: ignore [import-not-found]
 from typing import Any
 import re
 
@@ -185,6 +185,5 @@ class Parser:
                 raise ValueError(f"Line {i + 1}: Syntax error")
         if not start_check or not end_check:
             raise ValueError("Needs both start_hub and end_hub")
-
 
         PatchBayValidator(self.connections, self.hubs).check_duplicates()

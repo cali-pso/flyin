@@ -11,7 +11,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 class Visualiser:
     SPACE = 200
     OFFSET = 400
-    import pygame
+    import pygame  # type: ignore [import-not-found]
 
     def __init__(self, map: Map, paths: list[list[Hub | Connection]]) -> None:
         self.pygame.init()

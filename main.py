@@ -6,7 +6,7 @@ from errors import (
     VisualisingError,
 )
 
-from termcolor import cprint
+from termcolor import cprint  # type: ignore [import-not-found]
 import sys
 
 

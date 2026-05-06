@@ -1,6 +1,6 @@
 from typing import Any
 from dataclasses import dataclass
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator  # type: ignore
 
 
 class HubValidator(BaseModel):
