@@ -1,7 +1,7 @@
 from hubs import HubValidator, Hub, StartHub, EndHub
 from connections import Connection, PatchBayValidator
 
-from pydantic import ValidationError
+from pydantic import ValidationError  # type: ignore [import-not-found]
 from typing import Any
 import re
 
@@ -48,8 +48,7 @@ class Parser:
         else:
             return nb_drones
 
-    @staticmethod
-    def parse_zone(line: str, line_nbr: int) -> dict[str, Any]:
+    def parse_zone(self, line: str, line_nbr: int) -> dict[str, Any]:
         # Pattern explanation:
         # ^(start_hub|end_hub|hub):    Matches the prefix
         # \s+([^\s\-]+)                Matches the name (no spaces or dashes)
@@ -73,11 +72,16 @@ class Parser:
 
         metadata: dict[str, str] = dict()
         if metadata_str:
-            pairs = re.findall(r"([a-zA-Z_]+)=([a-zA-Z0-9_]+)", metadata_str)
+            pairs = re.findall(r"([a-zA-Z_]+)=([a-zA-Z0-9_-]+)", metadata_str)
             for k, v in pairs:
                 metadata[k] = v
-        max_drones = metadata.get("max_drones", None)
-        if max_drones and int(max_drones) < 0:
+        default_max = (
+            None
+            if hub_type not in ["start_hub", "end_hub"]
+            else self.nb_drones
+        )
+        max_drones = metadata.get("max_drones", default_max)
+        if max_drones and int(max_drones) <= 0:
             raise ValueError(
                 f"Line {line_nbr + 1}: max_drones must be a positive integer"
             )
@@ -87,14 +91,13 @@ class Parser:
             "x": int(x),
             "y": int(y),
             "zone": metadata.get("zone", None),
-            "color": metadata.get("color", None),
+            "color": metadata.get("color", "white"),
             "max_drones": max_drones if max_drones else 1,
         }
         return config_dict
 
-    @staticmethod
-    def get_zone(line: str, line_nbr: int) -> Hub:
-        config_dict = Parser.parse_zone(line, line_nbr)
+    def get_zone(self, line: str, line_nbr: int) -> Hub:
+        config_dict = self.parse_zone(line, line_nbr)
         try:
             HubValidator.model_validate(config_dict)
         except ValidationError as e:
@@ -156,9 +159,9 @@ class Parser:
         ]
         return Connection(start_node, end_node, max_link_capacity)
 
-    def parse_file(self) -> None:
+    def parse_file(self, map_filename: str) -> None:
 
-        cleaned = self.get_cleaned_lines("config.txt")
+        cleaned = self.get_cleaned_lines(map_filename)
 
         self.nb_drones = self.get_nb_drones(cleaned[0][1])
         self.hubs: list[Hub] = list()
@@ -187,4 +190,4 @@ class Parser:
         if not start_check or not end_check:
             raise ValueError("Needs both start_hub and end_hub")
 
-        PatchBayValidator(self.connections).check_duplicates()
+        PatchBayValidator(self.connections, self.hubs).check_duplicates()

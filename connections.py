@@ -16,8 +16,9 @@ class Connection:
 
 
 class PatchBayValidator:
-    def __init__(self, connections: list[Connection]) -> None:
+    def __init__(self, connections: list[Connection], hubs: list[Hub]) -> None:
         self.connections = connections
+        self.hubs = hubs
 
     def check_duplicates(self) -> Any:
         pairs: list[tuple[Hub, Hub]] = list()
@@ -29,5 +30,10 @@ class PatchBayValidator:
                 [p for p in pairs if p == pair]
             ) > 1:
                 raise ValueError(f"duplicate connection {pair[0]}-{pair[1]}")
+
+        names_set = {hub.name for hub in self.hubs}
+        names_list = [hub.name for hub in self.hubs]
+        if len(names_set) != len(names_list):
+            raise ValueError("duplicate hubs")
 
         return self

@@ -6,7 +6,7 @@ from errors import (
     VisualisingError,
 )
 
-from termcolor import cprint
+from termcolor import cprint  # type: ignore [import-not-found]
 import sys
 
 
@@ -14,6 +14,7 @@ if __name__ == "__main__":
     try:
         controller = Controller()
 
+        controller.parse_command_line_arguments()
         controller.run_parser()
         controller.run_simulation()
         controller.run_printer()

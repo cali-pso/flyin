@@ -58,6 +58,9 @@ class PathFinder:
         start_hub = self.locations_dict[start_name]
         goal_hub = self.locations_dict[goal_name]
 
+        assert isinstance(start_hub, Hub)
+        assert isinstance(goal_hub, Hub)
+
         open_set: list[SearchState] = []
         initial_h = self.heuristic(start_hub, goal_hub)
         heapq.heappush(
@@ -92,6 +95,7 @@ class PathFinder:
                 current_hub_obj = self.locations_dict[
                     current_state.current_hub_name
                 ]
+                assert isinstance(current_hub_obj, Hub)
                 wait_h = self.heuristic(
                     current_hub_obj,
                     goal_hub,

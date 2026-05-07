@@ -1,10 +1,13 @@
 NAME = main.py
+ARGS = -v
+MAP = config.txt
+COMMAND = $(NAME) $(MAP) $(ARGS) 
 
 install:
 	uv sync
 
 run:
-	@ uv run $(NAME)
+	@ uv run python3 $(COMMAND)
 
 debug:
 	@ uv run python -m pdb $(NAME)
@@ -16,4 +19,4 @@ clean:
 
 lint:
 	- flake8 . --exclude '.venv'
-	- mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	- mypy . --warn-return-any --warn-unused-ignores --disallow-untyped-defs --check-untyped-defs

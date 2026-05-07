@@ -13,15 +13,32 @@ from errors import (
     VisualisingError,
 )
 
+import argparse
+
 
 class Controller:
     def __init__(self) -> None:
         pass
 
+    def parse_command_line_arguments(self) -> None:
+        argparser = argparse.ArgumentParser()
+        argparser.add_argument(
+            "map", type=str, help="name of text file containing map"
+        )
+        argparser.add_argument(
+            "-v",
+            "--visual",
+            action="store_true",
+            help="Run pygame visualiser after printing algorithm result",
+        )
+        args = argparser.parse_args()
+        self.map_filename = args.map
+        self.run_visual_bool = args.visual
+
     def run_parser(self) -> None:
         try:
             parser = Parser()
-            parser.parse_file()
+            parser.parse_file(self.map_filename)
             self.map = Map(parser)
         except Exception as e:
             raise ParsingError(e)
@@ -47,11 +64,12 @@ class Controller:
             raise PathFindingError(e)
 
     def run_visualiser(self) -> None:
-        try:
-            visualiser = Visualiser(self.map, self.paths)
-            visualiser.run()
-        except Exception as e:
-            raise VisualisingError(e)
+        if self.run_visual_bool:
+            try:
+                visualiser = Visualiser(self.map, self.paths)
+                visualiser.run()
+            except Exception as e:
+                raise VisualisingError(e)
 
     def run_printer(self) -> None:
         try:

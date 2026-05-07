@@ -1,7 +1,7 @@
 from hubs import Hub
 from connections import Connection
 
-from termcolor import cprint
+from termcolor import cprint  # type: ignore [import-not-found]
 from typing import Optional
 
 
