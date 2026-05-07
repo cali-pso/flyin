@@ -169,11 +169,15 @@ class Parser:
             line_type: str = cleaned[i][1].split(":")[0]
 
             if "hub" in line_type:
+                self.hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
                 if line_type == "start_hub":
+                    if int(self.hubs[-1].max_drones) < self.nb_drones:
+                        raise ValueError("start_hub doesn't allow enough drones")
                     start_check = True
                 elif line_type == "end_hub":
+                    if int(self.hubs[-1].max_drones) < self.nb_drones:
+                        raise ValueError("end_hub doesn't allow enough drones")
                     end_check = True
-                self.hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
             elif "connection" == line_type:
                 self.connections.append(
                     self.get_connection(cleaned[i][1], cleaned[i][0])

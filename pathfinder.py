@@ -183,7 +183,6 @@ class Scout:
             current_name = queue.popleft()
 
             if current_name == self.end_name:
-                print("what")
                 return
 
             for neighbor in self.graph[current_name]:
