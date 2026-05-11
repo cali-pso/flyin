@@ -9,6 +9,8 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 
 class Visualiser:
+    """A pygame-based GUI visualiser for the simulation."""
+
     SPACE = 200
     OFFSET = 400
     import pygame  # type: ignore [import-not-found]
@@ -36,6 +38,7 @@ class Visualiser:
         self.paused = False
 
     def run(self) -> None:
+        """Starts the main pygame event loop."""
 
         last_update = 0
         anim_time = 1250
@@ -78,6 +81,7 @@ class Visualiser:
             self.clock.tick(30)
 
     def print_turn(self) -> None:
+        """Renders the current turn counter."""
         text = self.big_font.render(
             f"{self.current_turn}/{self.turns - 1}", True, "white"
         )
@@ -85,6 +89,7 @@ class Visualiser:
         self.screen.blit(text, text_pos)
 
     def print_connections(self) -> None:
+        """Renders all map connections."""
         for connec in self.map.connections:
             start_pos = self.get_drone_px(connec.start_node)
             end_pos = self.get_drone_px(connec.end_node)
@@ -97,6 +102,7 @@ class Visualiser:
             )
 
     def print_hubs(self) -> None:
+        """Renders all map hubs and their usage."""
         for hub in self.map.hubs:
             pos = self.get_drone_px(hub)
             if hub.color == "rainbow":
@@ -176,6 +182,7 @@ class Visualiser:
                 )
 
     def print_drones(self) -> None:
+        """Draws drones at their static locations for the current turn."""
         for drone in self.paths_by_turn[self.current_turn]:
             if drone:
                 self.pygame.draw.circle(
@@ -192,6 +199,7 @@ class Visualiser:
                 )
 
     def get_drone_px(self, loc: Hub | Connection) -> tuple[float, float]:
+        """Calculates the on-screen pixel coordinates for a location."""
 
         if isinstance(loc, Hub):
             pos = (
@@ -205,6 +213,7 @@ class Visualiser:
         return pos
 
     def get_centered_map(self) -> None:
+        """Calculates scaling and offsets to center the map."""
         xs = [i.x for i in self.map.hubs]
         ys = [i.y for i in self.map.hubs]
         min_x, max_x, min_y, max_y = min(xs), max(xs), min(ys), max(ys)

@@ -6,11 +6,14 @@ from typing import Optional
 
 
 class Printer:
+    """Formats and prints drone paths turn-by-turn."""
+
     def __init__(
         self,
         paths: list[list[Hub | Connection]],
         connections_dict: dict[Connection, str],
     ) -> None:
+        """Initializes the Printer with paths and connection mappings."""
         self.paths = paths
         self.connections_dict = connections_dict
         self.turns = max([len(i) for i in self.paths])
@@ -42,6 +45,7 @@ class Printer:
         }
 
     def print(self) -> None:
+        """Prints the movements of each active drone for all turns."""
         for turn in range(1, self.turns):
             printed_this_turn = False
 
@@ -72,6 +76,7 @@ class Printer:
 
     @staticmethod
     def print_rainbow(text: str, ending: str = " ") -> None:
+        """Prints text in rainbow colors."""
         rainbow_colors = [
             (255, 0, 0),  # Red
             (255, 127, 0),  # Orange

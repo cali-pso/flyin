@@ -7,6 +7,14 @@ import re
 
 
 class Parser:
+    """Open, read and parse configuration file
+
+    Attributes:
+        - nb_drones: drones to simulate
+        - hubs: list of Hubs (nodes)
+        - connections: list of Connections (edges)
+    """
+
     def __init__(self) -> None:
         pass
 
@@ -49,6 +57,7 @@ class Parser:
             return nb_drones
 
     def parse_zone(self, line: str, line_nbr: int) -> dict[str, Any]:
+        """Parse line with regex and return corresponding dictionnary"""
         # Pattern explanation:
         # ^(start_hub|end_hub|hub):    Matches the prefix
         # \s+([^\s\-]+)                Matches the name (no spaces or dashes)
@@ -97,6 +106,10 @@ class Parser:
         return config_dict
 
     def get_zone(self, line: str, line_nbr: int) -> Hub:
+        """Try parsing zone and instantiate hub with config dictionnary.
+        Return hub
+
+        """
         config_dict = self.parse_zone(line, line_nbr)
         try:
             HubValidator.model_validate(config_dict)
@@ -116,6 +129,7 @@ class Parser:
             return hub
 
     def parse_connection(self, line: str, line_nbr: int) -> dict[str, Any]:
+        """Parse line with regex and return corresponding dictionnary"""
         pattern = (
             r"^(connection):"
             r"\s+([^\s\-]+)"
@@ -153,6 +167,10 @@ class Parser:
         return config_dict
 
     def get_connection(self, line: str, line_nbr: int) -> Connection:
+        """Try parsing edge and instantiate connection with config dictionnary.
+        Return connection
+
+        """
         config_dict = self.parse_connection(line, line_nbr)
         start_node, end_node, max_link_capacity = [
             v for k, v in config_dict.items()
@@ -160,6 +178,10 @@ class Parser:
         return Connection(start_node, end_node, max_link_capacity)
 
     def parse_file(self, map_filename: str) -> None:
+        """
+        Open, read and parse file taken as argument.
+        Store retrieved hubs and connections.
+        """
 
         cleaned = self.get_cleaned_lines(map_filename)
 
@@ -175,7 +197,9 @@ class Parser:
                 self.hubs.append(self.get_zone(cleaned[i][1], cleaned[i][0]))
                 if line_type == "start_hub":
                     if int(self.hubs[-1].max_drones) < self.nb_drones:
-                        raise ValueError("start_hub doesn't allow enough drones")
+                        raise ValueError(
+                            "start_hub doesn't allow enough drones"
+                        )
                     start_check = True
                 elif line_type == "end_hub":
                     if int(self.hubs[-1].max_drones) < self.nb_drones:

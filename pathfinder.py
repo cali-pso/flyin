@@ -24,6 +24,15 @@ class SearchState:
 
 
 class PathFinder:
+    """Run the A* path-finding algorithm collaborating with a ReservationTable
+    on a given map from a given point
+
+    Attributes:
+        - map: Map taken from Controller
+        - locations_dict: dict mapping hubs and connections to their name
+
+    """
+
     def __init__(self, map: Map):
         self.map = map
         self.locations_dict: Dict[str, Hub | Connection] = {
@@ -40,8 +49,8 @@ class PathFinder:
 
     def heuristic(self, current_hub: Hub, goal_hub: Hub) -> int:
         """
-        Calculates the Manhattan distance between two hubs.
-        Acts as h(n) for the A* algorithm.
+        Calculate the Manhattan distance between two hubs.
+        Act as h(n) for the A* algorithm.
         """
         return abs(current_hub.x - goal_hub.x) + abs(
             current_hub.y - goal_hub.y
@@ -54,6 +63,19 @@ class PathFinder:
         start_turn: int,
         reservation_table: ReservationTable,
     ) -> List[Hub | Connection]:
+        """
+        Executes custom A* algorithm to find path between two nodes.
+
+        Arguments:
+            - start_name: name of start node
+            - end_name: name of end node
+            - start_turn: turn of the ReservationTable on which to start
+            - reservation_table: ReservationTable instance for capacity lookups
+
+        Returns:
+            - Path as list of hubs and connections.
+
+        """
 
         start_hub = self.locations_dict[start_name]
         goal_hub = self.locations_dict[goal_name]
