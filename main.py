@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from controller import Controller
 from errors import (
     ParsingError,
