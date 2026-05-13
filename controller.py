@@ -92,12 +92,8 @@ class Controller:
         """Instantiate and run printer"""
         try:
             connections_dict = {
-                connec: name
-                for name in [
-                    self.map.get_connection_from_obj(n)
-                    for n in self.map.connections
-                ]
-                for connec in self.map.connections
+                n: self.map.get_connection_from_obj(n)
+                for n in self.map.connections
             }
             printer = Printer(self.paths, connections_dict)
             printer.print()
