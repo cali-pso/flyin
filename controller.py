@@ -17,10 +17,21 @@ import argparse
 
 
 class Controller:
+    """
+    Initialize manage and run core components of the program
+
+    Attributes:
+        - map_filename: taken from command line to parser
+        - run_visual_bool: flag deciding wether to run visualiser
+        - Map: Map instance from parser
+        - paths: 2D list of paths taken by each drone
+    """
+
     def __init__(self) -> None:
         pass
 
     def parse_command_line_arguments(self) -> None:
+        """Look up passed arguments and store relevant information"""
         argparser = argparse.ArgumentParser()
         argparser.add_argument(
             "map", type=str, help="name of text file containing map"
@@ -36,6 +47,7 @@ class Controller:
         self.run_visual_bool = args.visual
 
     def run_parser(self) -> None:
+        """Instantiate and run parser, store map"""
         try:
             parser = Parser()
             parser.parse_file(self.map_filename)
@@ -44,6 +56,10 @@ class Controller:
             raise ParsingError(e)
 
     def run_simulation(self) -> None:
+        """
+        Instantiate and run scout then pathfinder,
+        storing relevant information along the way.
+        """
         try:
             scout = Scout(self.map)
             scout.is_solvable()
@@ -64,6 +80,7 @@ class Controller:
             raise PathFindingError(e)
 
     def run_visualiser(self) -> None:
+        """Instantiate and run visualiser if flag is true"""
         if self.run_visual_bool:
             try:
                 visualiser = Visualiser(self.map, self.paths)
@@ -72,6 +89,7 @@ class Controller:
                 raise VisualisingError(e)
 
     def run_printer(self) -> None:
+        """Instantiate and run printer"""
         try:
             connections_dict = {
                 connec: name

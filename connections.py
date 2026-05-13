@@ -4,6 +4,13 @@ from typing import Any, Optional
 
 
 class Connection:
+    """
+    Class representing an edge in our graph.
+
+    Holds the two nodes it links, and maximum capacity.
+
+    """
+
     def __init__(
         self,
         start_node: Hub,
@@ -16,11 +23,14 @@ class Connection:
 
 
 class PatchBayValidator:
+    """Validator class ensuring coherence in a set of hubs and connections."""
+
     def __init__(self, connections: list[Connection], hubs: list[Hub]) -> None:
         self.connections = connections
         self.hubs = hubs
 
     def check_duplicates(self) -> Any:
+        """Check for duplicates in hubs and connections"""
         pairs: list[tuple[Hub, Hub]] = list()
         for connection in self.connections:
             pairs.append((connection.start_node, connection.end_node))

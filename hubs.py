@@ -4,6 +4,8 @@ from pydantic import BaseModel, model_validator  # type: ignore
 
 
 class HubValidator(BaseModel):
+    """Validator class running tests before instantiation of Hub"""
+
     hub_type: str
     name: str
     x: int
@@ -22,6 +24,8 @@ class HubValidator(BaseModel):
 
 @dataclass
 class Hub:
+    """Represent a node in our graph"""
+
     hub_type: str
     name: str
     x: int
@@ -33,9 +37,13 @@ class Hub:
 
 @dataclass
 class StartHub(Hub):
+    """Represent start node"""
+
     color: str = "blue"
 
 
 @dataclass
 class EndHub(Hub):
+    """Represent end node"""
+
     color: str = "red"

@@ -37,11 +37,13 @@ class ReservationTable:
             self.capacities[connec_name] = capacity
 
     def get_occupancy(self, turn: int, location: str) -> int:
+        """Return the number of drones at a location during a specific turn."""
         if turn not in self.table:
             return 0
         return self.table[turn].get(location, 0)
 
     def is_available(self, turn: int, location: str) -> bool:
+        """Checks if a location has available capacity at a specific turn."""
 
         if location not in self.capacities:
             raise ValueError(
@@ -59,6 +61,7 @@ class ReservationTable:
         return occupancy < capacity
 
     def reserve(self, turn: int, location: str) -> None:
+        """Reserves a slot at a location for a specific turn."""
 
         if not self.is_available(turn, location):
             raise ValueError(

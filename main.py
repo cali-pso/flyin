@@ -10,7 +10,8 @@ from termcolor import cprint  # type: ignore [import-not-found]
 import sys
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Run program"""
     try:
         controller = Controller()
 
@@ -31,3 +32,7 @@ if __name__ == "__main__":
         cprint(f"Error: {e}", "red", file=sys.stderr)
     finally:
         sys.exit()
+
+
+if __name__ == "__main__":
+    main()
